@@ -356,12 +356,30 @@ with day_revenue as (
  inner join cd.facilities fac
  on fac.facid = boo.facid
  group by date
-)
-select 
-	*
+), days as (
+ select to_char(generate_series('2012-07-01'::date,'2012-10-12'::date,'1 day'),
+				'YYYY-MM-DD') as date 
+), day_revenue_complete as (
+  	select
+		days.date,
+		coalesce(revenue,0) as revenue
+	from days as days
+	left join day_revenue dayr
+	on days.date = dayr.date
+	order by date
+), revenue_15day as (
+select
+    date,
+    avg(revenue) over (
+        order by date
+        rows between 14 preceding and current row
+    ) as revenue
 from day_revenue
-where date >= '2012-08-01'
-order by date
+order by date asc
+)
+select *
+from revenue_15day
+where date >= '2012-08-01' and date < '2012-09-01'
 --- HINT You'll need to generate a list of days: check out GENERATE_SERIES for that. 
 --- You can then solve this problem using aggregate functions or window functions.
 
